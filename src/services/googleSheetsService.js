@@ -3,7 +3,7 @@ import axios from 'axios';
 class GoogleSheetsService {
   constructor() {
     // معرف Google Sheets - يجب تحديثه بالمعرف الفعلي
-    this.SHEET_ID = 'YOUR_SHEET_ID_HERE';
+    this.SHEET_ID = '1GaxEmX22jVOkplDN-QknKEgvPeSCUV2_nOkE1Oy3v5U';
     this.API_KEY = 'YOUR_API_KEY_HERE'; // اختياري للوصول العام
     this.RANGE = 'Sheet1!A:H'; // النطاق المطلوب قراءته
     

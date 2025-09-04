@@ -44,7 +44,7 @@ const HomePage = () => {
     'سماعات': Headphones,
     'شاحنات': Zap,
     'كيبلات': Cable,
-    'لزكات حماية': Shield,
+    'لزقات حماية': Shield,
     'اكسسوارات': Smartphone
   };
 

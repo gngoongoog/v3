@@ -4,7 +4,7 @@ class GoogleSheetsService {
   constructor() {
     // معرف Google Sheets - يجب تحديثه بالمعرف الفعلي
     this.SHEET_ID = '1GaxEmX22jVOkplDN-QknKEgvPeSCUV2_nOkE1Oy3v5U';
-    this.API_KEY = 'YOUR_API_KEY_HERE'; // اختياري للوصول العام
+    this.API_KEY = 'AKfycbzH6mq-28sMELZwdueqWo7YA7b9gWnkNafNyStH_yD5EAP6_RnDvuSUXfVcb4R2JzIu9A'; // اختياري للوصول العام
     this.RANGE = 'Sheet1!A:H'; // النطاق المطلوب قراءته
     
     // رابط CSV للوصول المباشر (بديل أسهل)

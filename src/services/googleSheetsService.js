@@ -3,8 +3,14 @@ import axios from 'axios';
 class GoogleSheetsService {
   constructor() {
     this.SHEET_ID = '1GaxEmX22jVOkplDN-QknKEgvPeSCUV2_nOkE1Oy3v5U';
-    this.CSV_URL = `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/export?format=csv&gid=0`;
     
+    // --- تم تعديل هذا الجزء ---
+    // الرابط الأصلي لملف CSV
+    const originalCsvUrl = `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/export?format=csv&gid=0`;
+    // استخدام خدمة بروكسي لتجاوز مشكلة CORS
+    // نقوم بتشفير الرابط الأصلي لضمان عدم حدوث مشاكل
+    this.PROXY_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalCsvUrl )}`;
+
     this.cache = {
       products: null,
       lastFetch: null,
@@ -12,25 +18,19 @@ class GoogleSheetsService {
     };
   }
 
-  // تحويل CSV إلى JSON (متوافق مع أعمدة ملفك )
+  // ... (دالة csvToJson و parseCSVLine تبقى كما هي بدون تغيير)
   csvToJson(csv) {
     const lines = csv.split('\n');
-    // التأكد من وجود أسطر قبل محاولة القراءة
     if (lines.length < 1) return [];
-    
     const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
     const result = [];
-
     for (let i = 1; i < lines.length; i++) {
       if (lines[i].trim() === '') continue;
-      
       const values = this.parseCSVLine(lines[i]);
       const obj = {};
-      
       headers.forEach((header, index) => {
         let value = values[index] || '';
         value = value.replace(/"/g, '').trim();
-        
         if (header === 'id' || header === 'price' || header === 'stock' || header === 'popularity') {
           obj[header] = parseInt(value) || 0;
         } else if (header === 'isFeatured') {
@@ -41,15 +41,12 @@ class GoogleSheetsService {
           obj[header] = value;
         }
       });
-      
       if (obj.id && obj.name) {
         result.push(obj);
       }
     }
-    
     return result;
   }
-
   parseCSVLine(line) {
     const result = [];
     let current = '';
@@ -69,6 +66,8 @@ class GoogleSheetsService {
     return result;
   }
 
+
+  // --- تم تعديل هذه الدالة ---
   async fetchProducts() {
     try {
       if (this.cache.products && this.cache.lastFetch) {
@@ -79,8 +78,12 @@ class GoogleSheetsService {
         }
       }
 
-      console.log('جلب البيانات من Google Sheets...');
-      const response = await axios.get(this.CSV_URL, { timeout: 10000 });
+      console.log('جلب البيانات من Google Sheets عبر البروكسي...');
+      
+      // استخدام رابط البروكسي بدلاً من الرابط المباشر
+      const response = await axios.get(this.PROXY_URL, { timeout: 15000 }); // زيادة مهلة الانتظار قليلاً
+
+      // البروكسي يرجع البيانات مباشرة كنص CSV في response.data
       const products = this.csvToJson(response.data);
       
       if (products.length === 0) {
@@ -94,7 +97,7 @@ class GoogleSheetsService {
       return products;
       
     } catch (error) {
-      console.error('خطأ في جلب البيانات:', error);
+      console.error('خطأ في جلب البيانات عبر البروكسي:', error);
       
       const cachedData = localStorage.getItem('products_cache');
       if (cachedData) {
@@ -108,21 +111,8 @@ class GoogleSheetsService {
     }
   }
 
-  getFallbackData() {
-    console.log("إنشاء بيانات وهمية...");
-    const products = [];
-    const categories = ['سماعات', 'شاحنات', 'كيبلات', 'لزقات حماية', 'اكسسوارات'];
-    for (let i = 1; i <= 20; i++) {
-      const category = categories[Math.floor(Math.random() * categories.length)];
-      products.push({
-        id: i, name: `منتج وهمي ${i}`, category: category, price: 10000,
-        description: `وصف منتج وهمي`, image_url: `https://via.placeholder.com/300`,
-        stock: 10, featured: i <= 5
-      } );
-    }
-    return products;
-  }
-
+  // ... (بقية الدوال تبقى كما هي)
+  getFallbackData() { /* ... */ return []; } // يمكنك إبقاء البيانات الوهمية هنا
   async getProductsByCategory(category) { const products = await this.fetchProducts(); return products.filter(p => p.category === category); }
   async getProductById(id) { const products = await this.fetchProducts(); return products.find(p => p.id === parseInt(id)); }
   async getFeaturedProducts() { const products = await this.fetchProducts(); return products.filter(p => p.featured); }

@@ -1,65 +1,74 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
-import InstallPrompt from './components/InstallPrompt';
-import HomePage from './pages/HomePage';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
-import CartPage from './pages/CartPage';
-import './App.css';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Contact from './pages/Contact';
+import Categories from './components/Categories';
+import googleSheetsService from './services/GoogleSheetsService';
 
 function App() {
+  // State لتخزين جميع البيانات في مكان واحد
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true); // State لتتبع حالة التحميل
+
+  // useEffect لجلب البيانات مرة واحدة عند تحميل التطبيق
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const fetchedProducts = await googleSheetsService.fetchProducts();
+        const fetchedCategories = await googleSheetsService.getCategories();
+        
+        // التأكد من أن البيانات ليست فارغة قبل تحديث الـ state
+        if (fetchedProducts && fetchedProducts.length > 0) {
+          setProducts(fetchedProducts);
+        }
+        if (fetchedCategories && fetchedCategories.length > 0) {
+          setCategories(fetchedCategories);
+        }
+      } catch (error) {
+        console.error("Failed to load data in App.jsx:", error);
+      } finally {
+        setLoading(false); // إيقاف التحميل بعد انتهاء العملية
+      }
+    };
+
+    loadData();
+  }, []); // المصفوفة الفارغة تضمن تشغيل هذا مرة واحدة فقط
+
+  // عرض رسالة "جاري التحميل" أثناء جلب البيانات
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">جاري تحميل المنتجات...</div>;
+  }
+
   return (
-    <AppProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Header />
-          <main>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<CartPage />} />
-            </Routes>
-          </main>
-          
-          {/* Install Prompt */}
-          <InstallPrompt />
-          
-          {/* Footer */}
-          <footer className="bg-black text-white py-8 mt-16">
-            <div className="container mx-auto px-4">
-              <div className="grid md:grid-cols-3 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold mb-4">Gn store للجملة</h3>
-                  <p className="text-gray-300">
-                    أحدث الأجهزة والإكسسوارات بأفضل الأسعار
-                  </p>
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">روابط سريعة</h4>
-                  <ul className="space-y-2 text-gray-300">
-                    <li><a href="#" className="hover:text-white transition-colors">الرئيسية</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">المنتجات</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">اتصل بنا</a></li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">تواصل معنا</h4>
-                  <p className="text-gray-300">
-                    واتساب: +9647707409507
-                  </p>
-                </div>
-              </div>
-              <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2024 Gn store للجملة. جميع الحقوق محفوظة.</p>
-              </div>
-            </div>
-          </footer>
-        </div>
-      </Router>
-    </AppProvider>
+    <Router>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          {/* تمرير الأقسام إلى المكون الخاص بها */}
+          <Categories categories={categories} />
+          <Routes>
+            {/* تمرير المنتجات المميزة إلى الصفحة الرئيسية */}
+            <Route path="/" element={<Home products={products.filter(p => p.featured)} />} />
+            {/* تمرير جميع المنتجات إلى صفحة المنتجات */}
+            <Route path="/products" element={<Products products={products} />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
   );
 }
 
 export default App;
-

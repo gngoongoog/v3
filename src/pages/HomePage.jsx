@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import googleSheetsService from '../services/GoogleSheetsService';
+import googleSheetsService from '../services/GoogleSheetsService.js';
 import ProductCard from '../components/ProductCard';
 
 function Home() {
